@@ -7,12 +7,12 @@ pipeline {
  
    }
   
-   // stages {
-   //     stage('Checkout') {
-   //         steps {
-   //             checkout([$class: 'GitSCM', branches: [[name: '*/main']], extensions: [], userRemoteConfigs: [[url: 'https://github.com/saurabh-k-7/flask-app']]])
-   //         }
-   //     }
+   stages {
+       // stage('Checkout') {
+       //     steps {
+       //         checkout([$class: 'GitSCM', branches: [[name: '*/main']], extensions: [], userRemoteConfigs: [[url: 'https://github.com/saurabh-k-7/flask-app']]])
+       //     }
+       // }
        stage('Build') {
            steps {
                echo 'Building..'
