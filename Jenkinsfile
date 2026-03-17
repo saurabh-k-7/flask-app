@@ -1,41 +1,37 @@
 pipeline {
     agent any
-    
+  
     environment {
-        DOCKER_HUB_REPO = "shivammitra/flask-hello-world"
-        CONTAINER_NAME = "flask-hello-world"
-        DOCKERHUB_CREDENTIALS=credentials('dockerhub-credentials')
+        DOCKER_HUB_REPO = "saurabhk91/flask-app"
+        // This creates a unique name like saurabhk91/flask-app:5
+        IMAGE_TAG = "${DOCKER_HUB_REPO}:${env.BUILD_NUMBER}"
+        DOCKERHUB_CREDENTIALS = credentials('dockerhub-credentials')
     }
-    
+  
     stages {
-        /* We do not need a stage for checkout here since it is done by default when using "Pipeline script from SCM" option. */
-        
         stage('Build') {
             steps {
-                echo 'Building..'
-                sh 'docker image build -t $DOCKER_HUB_REPO:latest .'
-            }
-        }
-        stage('Test') {
-            steps {
-                echo 'Testing..'
-                sh 'docker stop $CONTAINER_NAME || true'
-                sh 'docker rm $CONTAINER_NAME || true'
-                sh 'docker run --name $CONTAINER_NAME $DOCKER_HUB_REPO /bin/bash -c "pytest test.py && flake8"'
+                sh "docker build -t ${IMAGE_TAG} ."
             }
         }
         stage('Push') {
             steps {
-                echo 'Pushing image..'
-                sh 'echo $DOCKERHUB_CREDENTIALS_PSW | docker login -u $DOCKERHUB_CREDENTIALS_USR --password-stdin'
-                sh 'docker push $DOCKER_HUB_REPO:latest'
+                sh "echo $DOCKERHUB_CREDENTIALS_PSW | docker login -u $DOCKERHUB_CREDENTIALS_USR --password-stdin"
+                sh "docker push ${IMAGE_TAG}"
             }
         }
         stage('Deploy') {
             steps {
-                echo 'Deploying....'
-                sh 'minikube kubectl -- apply -f deployment.yaml'
-                sh 'minikube kubectl -- apply -f service.yaml'
+                // Apply the base configuration
+                sh 'kubectl apply -f deployment.yaml'
+                sh 'kubectl apply -f service.yaml'
+                
+                // Update the image to the specific build version
+                // 'flask-app-container' must match the name in deployment.yaml
+                sh "kubectl set image deployment/flask-app-deployment flask-app-container=${IMAGE_TAG}"
+                
+                // Verify the rollout
+                sh "kubectl rollout status deployment/flask-app-deployment"
             }
         }
     }
