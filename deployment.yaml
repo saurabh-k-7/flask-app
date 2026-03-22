@@ -3,7 +3,7 @@ kind: Deployment
 metadata:
   name: flask-app-deployment  # Targeted by Jenkins
 spec:
-  replicas: 2
+  replicas: 5
   selector:
     matchLabels:
       app: flask-app
